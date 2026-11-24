@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f766e">
+<link rel="icon" href="icon-192.png">
+<title>ظبط الخزينة</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mut:#6b7280;--bd:#d9dde3;--ac:#0f766e;--pos:#15803d;--neg:#b91c1c;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111418;--card:#1a1f26;--tx:#eef0f3;--mut:#9aa3af;--bd:#2d343d;--ac:#2dd4bf;--pos:#4ade80;--neg:#f87171}}
+:root[data-theme="dark"]{--bg:#111418;--card:#1a1f26;--tx:#eef0f3;--mut:#9aa3af;--bd:#2d343d;--ac:#2dd4bf;--pos:#4ade80;--neg:#f87171}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;font-size:17px}
+.w{max-width:480px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:4px 0 2px}
+.s{color:var(--mut);font-size:14px;margin-bottom:12px}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:14px;color:var(--mut);margin:10px 0 4px}
+input,textarea,select{width:100%;padding:12px;font-size:18px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font-family:inherit}
+textarea{min-height:80px;font-size:16px}
+.d{font-size:30px;font-weight:700;text-align:center;padding:12px;border-radius:10px;border:1px dashed var(--bd);direction:ltr}
+.p{color:var(--pos)}.n{color:var(--neg)}
+.m{text-align:center;font-size:14px;margin-top:4px;min-height:20px}
+button{width:100%;padding:14px;font-size:18px;font-weight:700;border:0;border-radius:12px;background:var(--ac);color:#fff;margin-top:12px;font-family:inherit}
+:root:not([data-theme="light"]) button{color:#06201d}
+.h{font-size:14px;border-bottom:1px solid var(--bd);padding:8px 0}
+.err{color:var(--neg);font-size:14px;min-height:18px;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="w">
+<h1>ظبط الخزينة</h1>
+<div class="s" id="now"></div>
+<div class="c">
+<label>اسم الكاشير</label><select id="nm"></select>
+<label>الموعد</label>
+<select id="sl"><option>صباحي</option><option>منتصف اليوم</option><option>مسائي</option></select>
+<label>رصيد الخزينة على السيستم</label><input id="sy" type="number" inputmode="decimal" placeholder="0">
+<label>رصيد الخزينة الفعلي</label><input id="ac" type="number" inputmode="decimal" placeholder="0">
+<label>الفارق</label>
+<div class="d" id="df">0</div><div class="m" id="dm"></div>
+<label>سبب العجز أو الزيادة</label><textarea id="rs" placeholder="اكتب السبب"></textarea>
+<div class="err" id="er"></div>
+<button id="sd">إرسال التقرير على واتساب</button>
+</div>
+<div class="c"><b>آخر الظبطات على هذا الجهاز</b><div id="hs"></div></div>
+</div>
+<script>
+var NAMES=[ "كاشير المحاسب","كاشير منظفات","كاشير السيد","كاشير ابو عمار"];
+var SHEET_URL="https://script.google.com/macros/s/AKfycbyzolcMbmIaAcbrBOhf0Ij-G9zzaRViUBtU1mb2zJ8MUy269coM8myoUFcZ27Ewy93c/exec";
+var $=function(i){return document.getElementById(i)};
+function ld(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function sv(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function slot(){var h=new Date().getHours();return h<14?0:(h<19?1:2)}
+$('sl').selectedIndex=slot();
+(function(){var o='<option value="">اختار اسمك</option>';NAMES.forEach(function(x){o+='<option>'+x+'</option>'});$('nm').innerHTML=o;var n=ld('nm');if(n&&NAMES.indexOf(n)>-1)$('nm').value=n})();
+function dt(){var d=new Date();return d.toLocaleDateString('ar-EG')+' '+d.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}
+function tick(){$('now').textContent=dt()}tick();setInterval(tick,30000);
+function calc(){
+var s=parseFloat($('sy').value),a=parseFloat($('ac').value),e=$('df'),m=$('dm');
+if(isNaN(s)||isNaN(a)){e.textContent='0';e.className='d';m.textContent='';return null}
+var f=Math.round((a-s)*100)/100;
+e.textContent=(f>0?'+':'')+f;
+e.className='d '+(f>0?'p':(f<0?'n':''));
+m.textContent=f>0?'زيادة':(f<0?'عجز':'مظبوطة');
+return f}
+$('sy').oninput=calc;$('ac').oninput=calc;
+function hist(){
+var h=[];try{h=JSON.parse(ld('hs')||'[]')}catch(e){}
+$('hs').innerHTML=h.length?h.map(function(x){return '<div class="h">'+x+'</div>'}).join(''):'<div class="h">لا يوجد</div>'}
+hist();
+$('sd').onclick=function(){
+var nm=$('nm').value,f=calc(),rs=$('rs').value.trim(),er=$('er'),b=$('sd');er.textContent='';
+if(!nm){er.textContent='اختار اسمك';return}
+if(f===null){er.textContent='اكتب الرصيدين';return}
+if(f!==0&&!rs){er.textContent='اكتب سبب العجز أو الزيادة';return}
+sv('nm',nm);
+var st=f>0?'زيادة':(f<0?'عجز':'مظبوطة');
+var d=new Date(),z=function(x){return (x<10?'0':'')+x};
+var p={date:d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate()),time:z(d.getHours())+':'+z(d.getMinutes()),cashier:nm,slot:$('sl').value,system:parseFloat($('sy').value),actual:parseFloat($('ac').value),diff:f,reason:rs};
+var t='*تقرير ظبط الخزينة*\nالكاشير: '+nm+'\nالموعد: '+p.slot+'\nالوقت: '+dt()+'\nرصيد السيستم: '+$('sy').value+'\nالرصيد الفعلي: '+$('ac').value+'\nالفارق: '+(f>0?'+':'')+f+' ('+st+')\nالسبب: '+(rs||'-');
+function go(){
+var h=[];try{h=JSON.parse(ld('hs')||'[]')}catch(e){}
+h.unshift(dt()+' - '+p.slot+' - '+(f>0?'+':'')+f);sv('hs',JSON.stringify(h.slice(0,10)));hist();
+window.location.href='https://wa.me/?text='+encodeURIComponent(t)}
+if(!SHEET_URL){go();return}
+b.disabled=true;b.textContent='جاري الحفظ...';
+fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(p)})
+.then(function(){b.disabled=false;b.textContent='إرسال التقرير على واتساب';go()})
+.catch(function(){b.disabled=false;b.textContent='إرسال التقرير على واتساب';er.textContent='لم يتم الحفظ، تأكد من الإنترنت وحاول تاني'})};
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}
+</script>
+</body>
+</html>
